@@ -1,15 +1,26 @@
 /*
  * Design tokens — single source of truth for the visual system.
- * PLACEHOLDER VALUES: the palette (especially --color-accent) is decided
- * at M1 (PRD §11.2). Until then, never reference a colour outside this file.
+ * Palette follows the 60-30-10 rule (PRD §9):
+ *   ~60% base graphite, ~30% neutral surfaces/borders/text, ~10% accent.
+ * Accent #0060E5 is reserved for interaction and emphasis only:
+ * focus, primary actions, active/selected states, links.
+ * Never reference a colour outside this file.
  */
 :root {
+  /* 60 — base */
   --color-bg: #101214;
+
+  /* 30 — neutrals */
   --color-surface: #16191c;
   --color-border: #24282d;
   --color-text: #d9d4c9;
   --color-text-muted: #8a8577;
-  --color-accent: #9fb2c1;
+
+  /* 10 — accent + status */
+  --color-accent: #0060e5;
+  --color-accent-hover: #2579f0;
+  --color-accent-muted: rgba(0, 96, 229, 0.14);
+  --color-on-accent: #f2f5f9;
   --color-danger: #c96f5e;
 
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
@@ -27,4 +38,7 @@
   --space-6: 24px;
 
   --motion-fast: 120ms;
+
+  /* Frameless window: clearance for the macOS traffic lights overlay */
+  --titlebar-inset: 84px;
 }

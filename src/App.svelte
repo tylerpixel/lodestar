@@ -78,7 +78,7 @@
 </script>
 
 <div class="shell">
-  <header>
+  <header data-tauri-drag-region>
     <span class="wordmark">LODESTAR</span>
     <span class="milestone">M0 · walking skeleton</span>
   </header>
@@ -125,7 +125,7 @@
     <span class="num">v{version}</span>
     <span class="status">{updateStatus}</span>
     {#if pendingUpdate}
-      <button onclick={installUpdate}>Install v{pendingUpdate.version}</button>
+      <button class="primary" onclick={installUpdate}>Install v{pendingUpdate.version}</button>
     {:else}
       <button onclick={checkForUpdates}>Check for updates</button>
     {/if}
@@ -143,7 +143,8 @@
     display: flex;
     align-items: baseline;
     gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
+    /* left inset clears the macOS traffic lights; header doubles as drag region */
+    padding: var(--space-3) var(--space-4) var(--space-3) var(--titlebar-inset);
     border-bottom: 1px solid var(--color-border);
   }
 
@@ -221,6 +222,17 @@
 
   button:hover {
     border-color: var(--color-accent);
+  }
+
+  button.primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  button.primary:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
   }
 
   table {
