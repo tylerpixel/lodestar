@@ -1,26 +1,27 @@
 /*
  * Design tokens — single source of truth for the visual system.
  * Palette follows the 60-30-10 rule (PRD §9):
- *   ~60% base graphite, ~30% neutral surfaces/borders/text, ~10% accent.
- * Accent #0060E5 is reserved for interaction and emphasis only:
- * focus, primary actions, active/selected states, links.
+ *   60% — #262824 warm graphite base
+ *   30% — #4d5049 neutral (borders, structural lines; lightened for muted text)
+ *   10% — #80f906 lime accent: focus, primary actions, active/selected states
+ * Text on accent must be dark — white fails contrast on lime.
  * Never reference a colour outside this file.
  */
 :root {
   /* 60 — base */
-  --color-bg: #101214;
+  --color-bg: #262824;
 
   /* 30 — neutrals */
-  --color-surface: #16191c;
-  --color-border: #24282d;
-  --color-text: #d9d4c9;
-  --color-text-muted: #8a8577;
+  --color-surface: #2e302b;
+  --color-border: #4d5049;
+  --color-text: #dfe3d8;
+  --color-text-muted: #969b8d;
 
   /* 10 — accent + status */
-  --color-accent: #0060e5;
-  --color-accent-hover: #2579f0;
-  --color-accent-muted: rgba(0, 96, 229, 0.14);
-  --color-on-accent: #f2f5f9;
+  --color-accent: #80f906;
+  --color-accent-hover: #99fa38;
+  --color-accent-muted: rgba(128, 249, 6, 0.12);
+  --color-on-accent: #1c1e19;
   --color-danger: #c96f5e;
 
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;

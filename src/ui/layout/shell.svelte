@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import logotype from '../assets/logotype.svg';
 
   type NavItem = { id: string; label: string };
 
@@ -23,7 +24,7 @@
 <div class="shell">
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <header onmousedown={onHeaderMouseDown}>
-    <span class="wordmark">LODESTAR</span>
+    <img class="logotype" src={logotype} alt="LODESTAR" draggable="false" />
   </header>
   <div class="body">
     <nav>
@@ -55,10 +56,11 @@
     border-bottom: 1px solid var(--color-border);
   }
 
-  .wordmark {
-    font-family: var(--font-mono);
-    font-size: var(--text-base);
-    letter-spacing: 0.18em;
+  .logotype {
+    height: 14px;
+    width: auto;
+    user-select: none;
+    -webkit-user-drag: none;
   }
 
   .body {
