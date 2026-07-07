@@ -1,4 +1,6 @@
 <script lang="ts" module>
+  import type { Snippet } from 'svelte';
+
   export type Column<Row = Record<string, unknown>> = {
     key: string;
     label: string;
@@ -21,11 +23,14 @@
     rows,
     empty = 'No records.',
     onRowClick,
+    cells,
   }: {
     columns: Column<Row>[];
     rows: Row[];
     empty?: string;
     onRowClick?: (row: Row) => void;
+    /** Custom cell renderers keyed by column key (e.g. status badges). */
+    cells?: Record<string, Snippet<[Row]>>;
   } = $props();
 
   let sortKey = $state<string | null>(null);
@@ -92,7 +97,11 @@
               class:right={col.align === 'right'}
               title={col.title?.(row)}
             >
-              {display(col, row)}
+              {#if cells?.[col.key]}
+                {@render cells[col.key](row)}
+              {:else}
+                {display(col, row)}
+              {/if}
             </td>
           {/each}
         </tr>

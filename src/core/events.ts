@@ -2,6 +2,7 @@
 // Add event names + payload types here as modules ship.
 export interface AppEvents {
   'notes:changed': undefined;
+  'pipeline:changed': undefined;
 }
 
 type EventKey = keyof AppEvents;

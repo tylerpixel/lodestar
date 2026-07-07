@@ -26,16 +26,8 @@
     else void win.startDragging();
   }
 
-  const navItems = $derived(router.routes.filter((r) => r.id !== 'settings'));
+  const navItems = $derived(router.routes.filter((r) => r.id !== 'settings' && !r.hidden));
   const settingsRoute = $derived(router.routes.find((r) => r.id === 'settings'));
-  const captures = $derived(palette.commands.filter((c) => c.capture));
-
-  function onCapture(id: string) {
-    const cmd = palette.commands.find((c) => c.id === id);
-    if (!cmd) return;
-    if (cmd.input) palette.openCapture(cmd);
-    else void cmd.run();
-  }
 
   const Current = $derived(router.current?.component);
 </script>
@@ -44,8 +36,6 @@
   items={navItems}
   activeId={router.currentId}
   onNavigate={(id) => router.go(id)}
-  {captures}
-  {onCapture}
   settings={settingsRoute}
   {onHeaderMouseDown}
 >

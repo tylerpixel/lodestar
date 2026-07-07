@@ -4,6 +4,7 @@ import App from './App.svelte';
 import { registerModule } from './core/module';
 import { coreManifest } from './core';
 import { homeManifest } from './home';
+import { pipelineManifest } from './modules/pipeline';
 import { router } from './core/router.svelte';
 import { palette } from './core/command-palette/registry.svelte';
 import { updater } from './core/updater.svelte';
@@ -12,13 +13,16 @@ import { updater } from './core/updater.svelte';
 async function boot() {
   await registerModule(coreManifest);
   await registerModule(homeManifest);
+  await registerModule(pipelineManifest);
 
   palette.register(
-    ...router.routes.map((r) => ({
-      id: `nav:${r.id}`,
-      label: `Go to ${r.label}`,
-      run: () => router.go(r.id),
-    })),
+    ...router.routes
+      .filter((r) => !r.hidden)
+      .map((r) => ({
+        id: `nav:${r.id}`,
+        label: `Go to ${r.label}`,
+        run: () => router.go(r.id),
+      })),
     {
       id: 'app:check-updates',
       label: 'Check for updates',
