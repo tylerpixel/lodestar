@@ -1,9 +1,10 @@
 import { getDb } from '../../../core/db/client';
-import type {
-  ApplicationRow,
-  ApplicationStatus,
-  ApplicationEvent,
-  EventKind,
+import {
+  STATUSES,
+  type ApplicationRow,
+  type ApplicationStatus,
+  type ApplicationEvent,
+  type EventKind,
 } from './schema';
 
 // Staleness rule (PRD §7.1): any non-terminal application with
@@ -109,6 +110,59 @@ export async function updateDetails(id: number, fields: DetailFields): Promise<v
       fields.notes,
     ]
   );
+}
+
+export type ImportApplication = {
+  company: string;
+  role: string;
+  source?: string | null;
+  url?: string | null;
+  status?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  applied_at?: string | null;
+  next_action?: string | null;
+  next_action_due?: string | null;
+  notes?: string | null;
+};
+
+/** CSV import. Unknown statuses fall back to 'applied'; missing dates to now. */
+export async function importApplications(records: ImportApplication[]): Promise<number> {
+  const db = await getDb();
+  let count = 0;
+  for (const r of records) {
+    const status: ApplicationStatus = (STATUSES as readonly string[]).includes(r.status ?? '')
+      ? (r.status as ApplicationStatus)
+      : 'applied';
+    const result = await db.execute(
+      `INSERT INTO applications
+         (company, role, source, url, status, salary_min, salary_max,
+          applied_at, last_activity_at, next_action, next_action_due, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7,
+               COALESCE($8, datetime('now')), COALESCE($8, datetime('now')), $9, $10, $11)`,
+      [
+        r.company,
+        r.role,
+        r.source ?? null,
+        r.url ?? null,
+        status,
+        r.salary_min ?? null,
+        r.salary_max ?? null,
+        r.applied_at ?? null,
+        r.next_action ?? null,
+        r.next_action_due ?? null,
+        r.notes ?? null,
+      ]
+    );
+    if (result.lastInsertId != null) {
+      await db.execute(
+        `INSERT INTO application_events (application_id, kind, detail) VALUES ($1, 'note', 'imported from CSV')`,
+        [result.lastInsertId]
+      );
+    }
+    count++;
+  }
+  return count;
 }
 
 export async function listEvents(id: number): Promise<ApplicationEvent[]> {
