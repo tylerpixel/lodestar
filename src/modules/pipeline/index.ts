@@ -1,12 +1,16 @@
 import type { ModuleManifest } from '../../core/module';
 import initSql from './migrations/001_init.sql?raw';
+import outcomeSql from './migrations/002_outcome.sql?raw';
 import Board from './views/board.svelte';
 import Detail from './views/detail.svelte';
 import { pipelineCommands } from './commands';
 
 export const pipelineManifest: ModuleManifest = {
   id: 'pipeline',
-  migrations: [{ version: 1, name: 'init', sql: initSql }],
+  migrations: [
+    { version: 1, name: 'init', sql: initSql },
+    { version: 2, name: 'outcome', sql: outcomeSql },
+  ],
   routes: [
     { id: 'pipeline', label: 'Pipeline', component: Board },
     { id: 'pipeline:detail', label: 'Application', component: Detail, hidden: true },

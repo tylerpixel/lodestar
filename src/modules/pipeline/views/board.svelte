@@ -7,14 +7,20 @@
   import { events } from '../../../core/events';
   import { router } from '../../../core/router.svelte';
   import { relTime, absTime } from '../../../ui/time';
-  import { listApplications } from '../data/queries';
-  import { STATUS_TONE, type ApplicationRow } from '../data/schema';
+  import { listApplications, setStatus, deleteApplications } from '../data/queries';
+  import { STATUSES, STATUS_TONE, type ApplicationRow, type ApplicationStatus } from '../data/schema';
 
   let rows = $state<ApplicationRow[]>([]);
   let importOpen = $state(false);
+  let selected = $state<(string | number)[]>([]);
+  let bulkStatus = $state<ApplicationStatus>('interview');
+  let deleteArmed = $state(false);
+  let working = $state(false);
 
   async function refresh() {
     rows = await listApplications();
+    const alive = new Set(rows.map((r) => r.id as string | number));
+    selected = selected.filter((id) => alive.has(id));
   }
 
   $effect(() => {
@@ -24,44 +30,73 @@
 
   const staleCount = $derived(rows.filter((r) => r.is_stale).length);
 
+  // Column set mirrors the owner's job-tracking spreadsheet (PRD §7.1):
+  // company, role, stage, applied date, interview/rejection date, days between, notes, link.
   const columns: Column<ApplicationRow>[] = [
-    { key: 'company', label: 'company' },
-    { key: 'role', label: 'role' },
-    { key: 'status', label: 'status', width: '130px' },
-    { key: 'source', label: 'source', width: '90px', value: (r) => r.source ?? '' },
+    { key: 'company', label: 'company', width: '150px' },
+    { key: 'role', label: 'role', width: '170px' },
+    { key: 'status', label: 'stage', width: '130px' },
     {
       key: 'applied_at',
       label: 'applied',
       mono: true,
-      width: '90px',
-      value: (r) => relTime(r.applied_at),
-      sortValue: (r) => r.applied_at,
-      title: (r) => absTime(r.applied_at),
+      width: '100px',
+      value: (r) => r.applied_at.slice(0, 10),
+      title: (r) => `${relTime(r.applied_at)} · ${absTime(r.applied_at)}`,
     },
     {
-      key: 'last_activity_at',
-      label: 'activity',
+      key: 'outcome_at',
+      label: 'interview/rejection',
       mono: true,
-      width: '90px',
-      value: (r) => relTime(r.last_activity_at),
-      sortValue: (r) => r.last_activity_at,
-      title: (r) => absTime(r.last_activity_at),
+      width: '130px',
+      value: (r) => r.outcome_at?.slice(0, 10) ?? '',
+      sortValue: (r) => r.outcome_at ?? '',
+      title: (r) => (r.outcome_at ? `${relTime(r.outcome_at)} · ${absTime(r.outcome_at)}` : ''),
     },
     {
-      key: 'next_action',
-      label: 'next action',
-      width: '180px',
-      value: (r) =>
-        r.next_action
-          ? r.next_action + (r.next_action_due ? ` · ${r.next_action_due}` : '')
-          : '',
+      key: 'days_to_outcome',
+      label: 'days',
+      mono: true,
+      align: 'right',
+      width: '60px',
+      value: (r) => (r.days_to_outcome == null ? '' : String(r.days_to_outcome)),
+      sortValue: (r) => r.days_to_outcome ?? -1,
     },
-    { key: 'url', label: 'link', width: '48px', sortable: false },
+    { key: 'notes', label: 'notes', width: '220px', value: (r) => r.notes ?? '' },
+    { key: 'url', label: 'link', width: '52px', sortable: false },
   ];
 
   function openLink(e: MouseEvent, url: string) {
     e.stopPropagation();
     void openUrl(url);
+  }
+
+  function onSelectedChange(ids: (string | number)[]) {
+    selected = ids;
+    deleteArmed = false;
+  }
+
+  async function applyBulkStatus() {
+    if (!selected.length || working) return;
+    working = true;
+    for (const id of selected) await setStatus(Number(id), bulkStatus);
+    working = false;
+    selected = [];
+    events.emit('pipeline:changed');
+  }
+
+  async function bulkDelete() {
+    if (!selected.length || working) return;
+    if (!deleteArmed) {
+      deleteArmed = true;
+      return;
+    }
+    working = true;
+    await deleteApplications(selected.map(Number));
+    working = false;
+    selected = [];
+    deleteArmed = false;
+    events.emit('pipeline:changed');
   }
 </script>
 
@@ -93,15 +128,34 @@
       cells={{ status: statusCell, url: linkCell }}
       empty="No applications. ⌘K → Add application (Company - Role)."
       onRowClick={(r) => router.go('pipeline:detail', { id: r.id })}
+      selectable
+      {selected}
+      {onSelectedChange}
+      rowId={(r) => r.id}
     />
   </Panel>
 </div>
+
+{#if selected.length}
+  <div class="island">
+    <span class="count">{selected.length} selected</span>
+    <select bind:value={bulkStatus}>
+      {#each STATUSES as status (status)}
+        <option value={status}>{status}</option>
+      {/each}
+    </select>
+    <button onclick={applyBulkStatus} disabled={working}>Set stage</button>
+    <button class="danger" onclick={bulkDelete} disabled={working}>
+      {deleteArmed ? 'Confirm delete' : 'Delete'}
+    </button>
+    <button class="dismiss" onclick={() => onSelectedChange([])}>✕</button>
+  </div>
+{/if}
 
 <ImportDialog open={importOpen} onClose={() => (importOpen = false)} />
 
 <style>
   .board {
-    max-width: 1000px;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
@@ -129,5 +183,68 @@
 
   .link:hover {
     color: var(--color-accent-hover);
+  }
+
+  .island {
+    position: fixed;
+    bottom: var(--space-4);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+    z-index: 60;
+    animation: island-in var(--motion-fast) ease-out;
+  }
+
+  @keyframes island-in {
+    from {
+      transform: translate(-50%, 12px);
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+  }
+
+  .count {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    padding-right: var(--space-1);
+  }
+
+  .island select {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .island button {
+    border-radius: 999px;
+  }
+
+  .danger {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
+
+  .danger:hover {
+    border-color: var(--color-danger);
+    background: var(--color-danger-muted);
+  }
+
+  .dismiss {
+    border: none;
+    background: none;
+    color: var(--color-text-muted);
   }
 </style>

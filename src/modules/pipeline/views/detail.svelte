@@ -31,6 +31,7 @@
     url: '',
     salary_min: '',
     salary_max: '',
+    outcome_at: '',
     next_action: '',
     next_action_due: '',
     notes: '',
@@ -51,6 +52,7 @@
         url: app.url ?? '',
         salary_min: app.salary_min?.toString() ?? '',
         salary_max: app.salary_max?.toString() ?? '',
+        outcome_at: app.outcome_at?.slice(0, 10) ?? '',
         next_action: app.next_action ?? '',
         next_action_due: app.next_action_due ?? '',
         notes: app.notes ?? '',
@@ -76,6 +78,7 @@
       url: draft.url.trim() || null,
       salary_min: draft.salary_min ? Number(draft.salary_min) : null,
       salary_max: draft.salary_max ? Number(draft.salary_max) : null,
+      outcome_at: draft.outcome_at || null,
       next_action: draft.next_action.trim() || null,
       next_action_due: draft.next_action_due || null,
       notes: draft.notes.trim() || null,
@@ -140,6 +143,7 @@
         <label>url <input bind:value={draft.url} placeholder="https://…" /></label>
         <label>salary min <input bind:value={draft.salary_min} inputmode="numeric" /></label>
         <label>salary max <input bind:value={draft.salary_max} inputmode="numeric" /></label>
+        <label>interview/rejection date <input type="date" bind:value={draft.outcome_at} /></label>
         <label>next action <input bind:value={draft.next_action} placeholder="follow up Friday" /></label>
         <label>due <input type="date" bind:value={draft.next_action_due} /></label>
         <label class="wide">notes <textarea rows="3" bind:value={draft.notes}></textarea></label>

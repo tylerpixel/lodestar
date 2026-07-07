@@ -14,17 +14,22 @@ const IS_STALE = `(
   AND a.last_activity_at < datetime('now', '-7 days')
 )`;
 
+const COMPUTED = `${IS_STALE} AS is_stale,
+  CASE WHEN a.outcome_at IS NOT NULL
+    THEN CAST(julianday(a.outcome_at) - julianday(a.applied_at) AS INTEGER)
+  END AS days_to_outcome`;
+
 export async function listApplications(): Promise<ApplicationRow[]> {
   const db = await getDb();
   return db.select<ApplicationRow[]>(
-    `SELECT a.*, ${IS_STALE} AS is_stale FROM applications a ORDER BY a.last_activity_at DESC`
+    `SELECT a.*, ${COMPUTED} FROM applications a ORDER BY a.last_activity_at DESC`
   );
 }
 
 export async function getApplication(id: number): Promise<ApplicationRow | null> {
   const db = await getDb();
   const rows = await db.select<ApplicationRow[]>(
-    `SELECT a.*, ${IS_STALE} AS is_stale FROM applications a WHERE a.id = $1`,
+    `SELECT a.*, ${COMPUTED} FROM applications a WHERE a.id = $1`,
     [id]
   );
   return rows[0] ?? null;
@@ -59,10 +64,27 @@ export async function setStatus(id: number, status: ApplicationStatus): Promise<
      WHERE id = $1`,
     [id, status]
   );
+  // First transition into interview/rejected stamps the outcome date
+  await db.execute(
+    `UPDATE applications SET outcome_at = datetime('now')
+     WHERE id = $1 AND outcome_at IS NULL AND $2 IN ('interview', 'rejected')`,
+    [id, status]
+  );
   await db.execute(
     `INSERT INTO application_events (application_id, kind, detail) VALUES ($1, 'status_change', $2)`,
     [id, status]
   );
+}
+
+export async function deleteApplications(ids: number[]): Promise<void> {
+  if (!ids.length) return;
+  const db = await getDb();
+  const placeholders = ids.map((_, i) => `$${i + 1}`).join(', ');
+  await db.execute(
+    `DELETE FROM application_events WHERE application_id IN (${placeholders})`,
+    ids
+  );
+  await db.execute(`DELETE FROM applications WHERE id IN (${placeholders})`, ids);
 }
 
 /** Log activity (note/contact/interview). Refreshes last_activity_at. */
@@ -85,6 +107,7 @@ export type DetailFields = {
   url: string | null;
   salary_min: number | null;
   salary_max: number | null;
+  outcome_at: string | null;
   next_action: string | null;
   next_action_due: string | null;
   notes: string | null;
@@ -96,7 +119,7 @@ export async function updateDetails(id: number, fields: DetailFields): Promise<v
   await db.execute(
     `UPDATE applications
      SET source = $2, url = $3, salary_min = $4, salary_max = $5,
-         next_action = $6, next_action_due = $7, notes = $8,
+         outcome_at = $6, next_action = $7, next_action_due = $8, notes = $9,
          updated_at = datetime('now')
      WHERE id = $1`,
     [
@@ -105,6 +128,7 @@ export async function updateDetails(id: number, fields: DetailFields): Promise<v
       fields.url,
       fields.salary_min,
       fields.salary_max,
+      fields.outcome_at,
       fields.next_action,
       fields.next_action_due,
       fields.notes,
@@ -121,6 +145,7 @@ export type ImportApplication = {
   salary_min?: number | null;
   salary_max?: number | null;
   applied_at?: string | null;
+  outcome_at?: string | null;
   next_action?: string | null;
   next_action_due?: string | null;
   notes?: string | null;
@@ -137,9 +162,9 @@ export async function importApplications(records: ImportApplication[]): Promise<
     const result = await db.execute(
       `INSERT INTO applications
          (company, role, source, url, status, salary_min, salary_max,
-          applied_at, last_activity_at, next_action, next_action_due, notes)
+          applied_at, last_activity_at, outcome_at, next_action, next_action_due, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7,
-               COALESCE($8, datetime('now')), COALESCE($8, datetime('now')), $9, $10, $11)`,
+               COALESCE($8, datetime('now')), COALESCE($8, datetime('now')), $9, $10, $11, $12)`,
       [
         r.company,
         r.role,
@@ -149,6 +174,7 @@ export async function importApplications(records: ImportApplication[]): Promise<
         r.salary_min ?? null,
         r.salary_max ?? null,
         r.applied_at ?? null,
+        r.outcome_at ?? null,
         r.next_action ?? null,
         r.next_action_due ?? null,
         r.notes ?? null,

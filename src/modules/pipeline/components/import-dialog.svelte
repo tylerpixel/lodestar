@@ -15,6 +15,7 @@
     ['salary_min', 'salary min'],
     ['salary_max', 'salary max'],
     ['applied_at', 'applied date'],
+    ['outcome_at', 'interview/rejection date'],
     ['next_action', 'next action'],
     ['next_action_due', 'next action due'],
     ['notes', 'notes'],
@@ -47,6 +48,7 @@
     if (/status|stage/.test(h)) return 'status';
     if (/salarymin|minsalary|min/.test(h)) return 'salary_min';
     if (/salarymax|maxsalary|max/.test(h)) return 'salary_max';
+    if (/interview|reject|outcome|response/.test(h)) return 'outcome_at';
     if (/applied|date/.test(h)) return 'applied_at';
     if (/due/.test(h)) return 'next_action_due';
     if (/next|action|todo/.test(h)) return 'next_action';
@@ -103,6 +105,7 @@
         salary_min: toNumber(get(r, 'salary_min')),
         salary_max: toNumber(get(r, 'salary_max')),
         applied_at: get(r, 'applied_at') || null,
+        outcome_at: get(r, 'outcome_at') || null,
         next_action: get(r, 'next_action') || null,
         next_action_due: get(r, 'next_action_due') || null,
         notes: get(r, 'notes') || null,

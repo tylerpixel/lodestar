@@ -65,6 +65,12 @@ input:focus {
   border-color: var(--color-accent);
 }
 
+input[type='checkbox'] {
+  accent-color: var(--color-accent);
+  width: 13px;
+  height: 13px;
+}
+
 .boot-error {
   padding: var(--space-6);
   font-family: var(--font-mono);

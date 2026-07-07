@@ -4,6 +4,7 @@
   export type Column<Row = Record<string, unknown>> = {
     key: string;
     label: string;
+    /** Initial width (e.g. '120px'); user can drag-resize from there. */
     width?: string;
     align?: 'left' | 'right';
     mono?: boolean;
@@ -24,6 +25,10 @@
     empty = 'No records.',
     onRowClick,
     cells,
+    selectable = false,
+    selected = [],
+    onSelectedChange,
+    rowId,
   }: {
     columns: Column<Row>[];
     rows: Row[];
@@ -31,7 +36,46 @@
     onRowClick?: (row: Row) => void;
     /** Custom cell renderers keyed by column key (e.g. status badges). */
     cells?: Record<string, Snippet<[Row]>>;
+    /** Checkbox column; requires rowId. Parent owns the selection. */
+    selectable?: boolean;
+    selected?: (string | number)[];
+    onSelectedChange?: (ids: (string | number)[]) => void;
+    rowId?: (row: Row) => string | number;
   } = $props();
+
+  const SELECT_WIDTH = 36;
+  const DEFAULT_WIDTH = 140;
+  const MIN_WIDTH = 40;
+
+  function parseWidth(w?: string): number {
+    const n = w ? parseInt(w, 10) : NaN;
+    return Number.isFinite(n) ? n : DEFAULT_WIDTH;
+  }
+
+  let widths = $state<Record<string, number>>(
+    Object.fromEntries(columns.map((c) => [c.key, parseWidth(c.width)]))
+  );
+
+  const totalWidth = $derived(
+    columns.reduce((sum, c) => sum + (widths[c.key] ?? DEFAULT_WIDTH), 0) +
+      (selectable ? SELECT_WIDTH : 0)
+  );
+
+  function startResize(e: MouseEvent, key: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = widths[key] ?? DEFAULT_WIDTH;
+    const move = (ev: MouseEvent) => {
+      widths[key] = Math.max(MIN_WIDTH, startWidth + ev.clientX - startX);
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  }
 
   let sortKey = $state<string | null>(null);
   let sortDir = $state<1 | -1>(1);
@@ -70,49 +114,88 @@
       return cmp * sortDir;
     });
   });
+
+  const ids = $derived(selectable && rowId ? sorted.map((r) => rowId(r)) : []);
+  const allSelected = $derived(ids.length > 0 && ids.every((id) => selected.includes(id)));
+
+  function toggleAll() {
+    onSelectedChange?.(allSelected ? [] : [...ids]);
+  }
+
+  function toggleRow(e: Event, id: string | number) {
+    e.stopPropagation();
+    onSelectedChange?.(
+      selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]
+    );
+  }
 </script>
 
-<table>
-  <thead>
-    <tr>
-      {#each columns as col (col.key)}
-        <th style:width={col.width} class:right={col.align === 'right'}>
-          <button onclick={() => sortBy(col)} disabled={col.sortable === false}>
-            {col.label}{sortKey === col.key ? (sortDir === 1 ? ' ↑' : ' ↓') : ''}
-          </button>
-        </th>
-      {/each}
-    </tr>
-  </thead>
-  <tbody>
-    {#if sorted.length === 0}
-      <tr><td class="empty" colspan={columns.length}>{empty}</td></tr>
-    {:else}
-      {#each sorted as row, i (i)}
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <tr class:clickable={!!onRowClick} onclick={() => onRowClick?.(row)}>
-          {#each columns as col (col.key)}
-            <td
-              class:mono={col.mono}
-              class:right={col.align === 'right'}
-              title={col.title?.(row)}
-            >
-              {#if cells?.[col.key]}
-                {@render cells[col.key](row)}
-              {:else}
-                {display(col, row)}
-              {/if}
-            </td>
-          {/each}
+<div class="scroll">
+  <table style:width="{totalWidth}px">
+    <thead>
+      <tr>
+        {#if selectable}
+          <th class="sel" style:width="{SELECT_WIDTH}px">
+            <input type="checkbox" checked={allSelected} onclick={toggleAll} />
+          </th>
+        {/if}
+        {#each columns as col (col.key)}
+          <th style:width="{widths[col.key]}px" class:right={col.align === 'right'}>
+            <button onclick={() => sortBy(col)} disabled={col.sortable === false}>
+              {col.label}{sortKey === col.key ? (sortDir === 1 ? ' ↑' : ' ↓') : ''}
+            </button>
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <span class="resizer" onmousedown={(e) => startResize(e, col.key)}></span>
+          </th>
+        {/each}
+      </tr>
+    </thead>
+    <tbody>
+      {#if sorted.length === 0}
+        <tr>
+          <td class="empty" colspan={columns.length + (selectable ? 1 : 0)}>{empty}</td>
         </tr>
-      {/each}
-    {/if}
-  </tbody>
-</table>
+      {:else}
+        {#each sorted as row, i (rowId ? rowId(row) : i)}
+          <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+          <tr class:clickable={!!onRowClick} onclick={() => onRowClick?.(row)}>
+            {#if selectable && rowId}
+              <td class="sel">
+                <input
+                  type="checkbox"
+                  checked={selected.includes(rowId(row))}
+                  onclick={(e) => toggleRow(e, rowId(row))}
+                />
+              </td>
+            {/if}
+            {#each columns as col (col.key)}
+              <td
+                class:mono={col.mono}
+                class:right={col.align === 'right'}
+                title={col.title?.(row)}
+              >
+                {#if cells?.[col.key]}
+                  {@render cells[col.key](row)}
+                {:else}
+                  {display(col, row)}
+                {/if}
+              </td>
+            {/each}
+          </tr>
+        {/each}
+      {/if}
+    </tbody>
+  </table>
+</div>
 
 <style>
+  .scroll {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
   table {
-    width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: var(--text-sm);
   }
@@ -122,6 +205,13 @@
     text-align: left;
     padding: var(--space-1) var(--space-2);
     border-bottom: 1px solid var(--color-border);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  th {
+    position: relative;
   }
 
   th button {
@@ -132,10 +222,38 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: 500;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   th button:not(:disabled):hover {
     color: var(--color-text);
+  }
+
+  .resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -4px;
+    width: 8px;
+    cursor: col-resize;
+    z-index: 2;
+  }
+
+  .resizer:hover {
+    box-shadow: inset -2px 0 0 var(--color-accent);
+  }
+
+  .sel {
+    text-align: center;
+  }
+
+  .sel input {
+    padding: 0;
+    margin: 0;
+    vertical-align: middle;
   }
 
   .right {
