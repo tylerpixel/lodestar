@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { palette, type Command } from './registry.svelte';
 
   let query = $state('');
@@ -20,9 +21,12 @@
 
   $effect(() => {
     if (palette.open) {
-      query = '';
-      selected = 0;
-      inputMode = null;
+      untrack(() => {
+        query = '';
+        selected = 0;
+        inputMode = palette.seedInput;
+        palette.seedInput = null;
+      });
       queueMicrotask(() => inputEl?.focus());
     }
   });
