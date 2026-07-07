@@ -24,3 +24,51 @@ body {
 #app {
   height: 100%;
 }
+
+/* Base form elements — shared across all views */
+button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-3);
+  transition: border-color var(--motion-fast), background var(--motion-fast);
+}
+
+button:hover {
+  border-color: var(--color-accent);
+}
+
+button.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+button.primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  outline: none;
+  transition: border-color var(--motion-fast);
+}
+
+input:focus {
+  border-color: var(--color-accent);
+}
+
+.boot-error {
+  padding: var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  white-space: pre-wrap;
+}

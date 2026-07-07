@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS _settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS m0_smoke (
+  id INTEGER PRIMARY KEY,
+  note TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
