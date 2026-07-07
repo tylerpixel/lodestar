@@ -7,9 +7,15 @@ Built with Tauri 2 + Svelte 5. All data lives in SQLite at
 `~/Library/Application Support/com.tylerpixel.lodestar/lodestar.db` — outside the
 app bundle, untouched by updates.
 
-Strictly personal software: unsigned (ad-hoc), no notarisation. First install of a
-.dmg needs a one-time Gatekeeper bypass (right-click → Open). Updates after that
-flow through the built-in updater.
+Strictly personal software: unsigned (ad-hoc), no notarisation. A freshly
+downloaded .dmg install triggers the Gatekeeper "damaged" dialog on Apple
+Silicon; fix once with:
+
+```sh
+xattr -d com.apple.quarantine /Applications/Lodestar.app
+```
+
+Updates after that flow through the built-in updater with no prompts.
 
 ## Development
 
