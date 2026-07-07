@@ -1,0 +1,30 @@
+/*
+ * Design tokens — single source of truth for the visual system.
+ * PLACEHOLDER VALUES: the palette (especially --color-accent) is decided
+ * at M1 (PRD §11.2). Until then, never reference a colour outside this file.
+ */
+:root {
+  --color-bg: #101214;
+  --color-surface: #16191c;
+  --color-border: #24282d;
+  --color-text: #d9d4c9;
+  --color-text-muted: #8a8577;
+  --color-accent: #9fb2c1;
+  --color-danger: #c96f5e;
+
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: -apple-system, 'SF Pro Text', system-ui, sans-serif;
+
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-base: 14px;
+  --text-lg: 18px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  --motion-fast: 120ms;
+}
