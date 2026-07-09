@@ -4,6 +4,7 @@ export interface AppEvents {
   'notes:changed': undefined;
   'pipeline:changed': undefined;
   'habits:changed': undefined;
+  'ledger:changed': undefined;
   'settings:changed': undefined;
 }
 

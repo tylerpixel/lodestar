@@ -6,6 +6,7 @@ import { coreManifest } from './core';
 import { homeManifest } from './home';
 import { pipelineManifest } from './modules/pipeline';
 import { habitsManifest } from './modules/habits';
+import { ledgerManifest } from './modules/ledger';
 import { router } from './core/router.svelte';
 import { palette } from './core/command-palette/registry.svelte';
 import { updater } from './core/updater.svelte';
@@ -16,6 +17,7 @@ async function boot() {
   await registerModule(homeManifest);
   await registerModule(pipelineManifest);
   await registerModule(habitsManifest);
+  await registerModule(ledgerManifest);
 
   palette.register(
     ...router.routes
