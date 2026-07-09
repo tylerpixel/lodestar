@@ -65,11 +65,7 @@ input:focus {
   border-color: var(--color-accent);
 }
 
-input[type='checkbox'] {
-  accent-color: var(--color-accent);
-  width: 13px;
-  height: 13px;
-}
+/* Native checkboxes/selects are replaced by ui/components/{checkbox,radio,select}.svelte */
 
 .boot-error {
   padding: var(--space-6);

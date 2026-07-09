@@ -1,5 +1,6 @@
 <script lang="ts">
   import StatusBadge from '../../../ui/components/status-badge.svelte';
+  import Checkbox from '../../../ui/components/checkbox.svelte';
   import Panel from '../../../ui/layout/panel.svelte';
   import { events } from '../../../core/events';
   import { getSetting } from '../../../core/settings';
@@ -74,15 +75,14 @@
     {:else}
       <ul>
         {#each dueRows as row (row.habit.id)}
-          <li>
-            <label class:done={row.done}>
-              <input type="checkbox" checked={row.done} onchange={() => toggle(row)} />
+          <li class:done={row.done}>
+            <Checkbox checked={row.done} onToggle={() => toggle(row)}>
               <span class="name">{row.habit.name}</span>
               <span class="cadence">{cadenceLabel(row.habit)}</span>
               {#if row.atRisk}
                 <StatusBadge label="at risk" tone="warn" />
               {/if}
-            </label>
+            </Checkbox>
           </li>
         {/each}
       </ul>
@@ -93,12 +93,11 @@
     <Panel title="Not due today">
       <ul>
         {#each restRows as row (row.habit.id)}
-          <li>
-            <label class="muted">
-              <input type="checkbox" checked={row.done} onchange={() => toggle(row)} />
+          <li class="muted">
+            <Checkbox checked={row.done} onToggle={() => toggle(row)}>
               <span class="name">{row.habit.name}</span>
               <span class="cadence">{cadenceLabel(row.habit)}</span>
-            </label>
+            </Checkbox>
           </li>
         {/each}
       </ul>
@@ -124,23 +123,17 @@
 
   li {
     border-bottom: 1px solid var(--color-border);
-  }
-
-  label {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
     padding: var(--space-2) var(--space-1);
     font-size: var(--text-sm);
   }
 
-  label.done .name {
+  li.done .name {
     color: var(--color-text-muted);
     text-decoration: line-through;
     text-decoration-color: var(--color-border);
   }
 
-  label.muted .name {
+  li.muted .name {
     color: var(--color-text-muted);
   }
 

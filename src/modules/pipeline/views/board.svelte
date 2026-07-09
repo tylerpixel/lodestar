@@ -2,6 +2,7 @@
   import { openUrl } from '@tauri-apps/plugin-opener';
   import DataTable, { type Column } from '../../../ui/components/data-table.svelte';
   import StatusBadge from '../../../ui/components/status-badge.svelte';
+  import Select from '../../../ui/components/select.svelte';
   import Panel from '../../../ui/layout/panel.svelte';
   import ImportDialog from '../components/import-dialog.svelte';
   import { events } from '../../../core/events';
@@ -14,6 +15,7 @@
   let importOpen = $state(false);
   let selected = $state<(string | number)[]>([]);
   let bulkStatus = $state<ApplicationStatus>('interview');
+  const statusOptions = STATUSES.map((s) => ({ value: s, label: s }));
   let deleteArmed = $state(false);
   let working = $state(false);
 
@@ -139,11 +141,7 @@
 {#if selected.length}
   <div class="island">
     <span class="count">{selected.length} selected</span>
-    <select bind:value={bulkStatus}>
-      {#each STATUSES as status (status)}
-        <option value={status}>{status}</option>
-      {/each}
-    </select>
+    <Select options={statusOptions} bind:value={bulkStatus} direction="up" />
     <button onclick={applyBulkStatus} disabled={working}>Set stage</button>
     <button class="danger" onclick={bulkDelete} disabled={working}>
       {deleteArmed ? 'Confirm delete' : 'Delete'}
@@ -218,14 +216,6 @@
     font-size: var(--text-xs);
     color: var(--color-text-muted);
     padding-right: var(--space-1);
-  }
-
-  .island select {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-size: var(--text-sm);
-    padding: var(--space-1) var(--space-2);
   }
 
   .island button {

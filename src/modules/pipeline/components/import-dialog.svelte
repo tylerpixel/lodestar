@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '../../../ui/components/select.svelte';
   import { events } from '../../../core/events';
   import { parseCsv } from '../data/csv';
   import { importApplications, type ImportApplication } from '../data/queries';
@@ -20,6 +21,7 @@
     ['next_action_due', 'next action due'],
     ['notes', 'notes'],
   ];
+  const targetOptions = TARGETS.map(([value, label]) => ({ value, label }));
 
   let headers = $state<string[]>([]);
   let rows = $state<string[][]>([]);
@@ -152,12 +154,8 @@
                 <tr>
                   <td class="mono">{header}</td>
                   <td class="sample">{rows[0]?.[i] ?? ''}</td>
-                  <td>
-                    <select bind:value={mapping[i]}>
-                      {#each TARGETS as [value, label] (value)}
-                        <option {value}>{label}</option>
-                      {/each}
-                    </select>
+                  <td class="map-cell">
+                    <Select options={targetOptions} bind:value={mapping[i]} />
                   </td>
                 </tr>
               {/each}
@@ -259,13 +257,8 @@
     white-space: nowrap;
   }
 
-  select {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-size: var(--text-sm);
-    padding: var(--space-1) var(--space-2);
-    width: 100%;
+  .map-cell {
+    overflow: visible;
   }
 
   .actions {

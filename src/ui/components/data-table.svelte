@@ -19,6 +19,8 @@
 </script>
 
 <script lang="ts" generics="Row extends Record<string, unknown>">
+  import Checkbox from './checkbox.svelte';
+
   let {
     columns,
     rows,
@@ -136,7 +138,11 @@
       <tr>
         {#if selectable}
           <th class="sel" style:width="{SELECT_WIDTH}px">
-            <input type="checkbox" checked={allSelected} onclick={toggleAll} />
+            <Checkbox
+              checked={allSelected}
+              indeterminate={!allSelected && selected.length > 0}
+              onToggle={toggleAll}
+            />
           </th>
         {/if}
         {#each columns as col (col.key)}
@@ -161,10 +167,9 @@
           <tr class:clickable={!!onRowClick} onclick={() => onRowClick?.(row)}>
             {#if selectable && rowId}
               <td class="sel">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selected.includes(rowId(row))}
-                  onclick={(e) => toggleRow(e, rowId(row))}
+                  onToggle={(e) => toggleRow(e, rowId(row))}
                 />
               </td>
             {/if}
@@ -248,12 +253,7 @@
 
   .sel {
     text-align: center;
-  }
-
-  .sel input {
-    padding: 0;
-    margin: 0;
-    vertical-align: middle;
+    overflow: visible;
   }
 
   .right {

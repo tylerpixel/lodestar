@@ -1,6 +1,7 @@
 <script lang="ts">
   import DataTable, { type Column } from '../../../ui/components/data-table.svelte';
   import StatusBadge from '../../../ui/components/status-badge.svelte';
+  import Select from '../../../ui/components/select.svelte';
   import Panel from '../../../ui/layout/panel.svelte';
   import { events } from '../../../core/events';
   import { router } from '../../../core/router.svelte';
@@ -38,6 +39,7 @@
   });
   let eventKind = $state<EventKind>('note');
   let eventText = $state('');
+  const kindOptions = EVENT_KINDS.map((k) => ({ value: k, label: k }));
 
   async function load() {
     if (!id) {
@@ -155,11 +157,7 @@
 
     <Panel title="Activity">
       <form onsubmit={submitEvent}>
-        <select bind:value={eventKind}>
-          {#each EVENT_KINDS as kind (kind)}
-            <option value={kind}>{kind}</option>
-          {/each}
-        </select>
+        <Select options={kindOptions} bind:value={eventKind} />
         <input bind:value={eventText} placeholder="What happened? Enter to log — refreshes activity" />
         <button type="submit">Log</button>
       </form>
@@ -255,14 +253,6 @@
 
   textarea:focus {
     border-color: var(--color-accent);
-  }
-
-  select {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-size: var(--text-sm);
-    padding: var(--space-1) var(--space-2);
   }
 
   .actions {
