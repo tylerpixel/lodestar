@@ -1,5 +1,5 @@
 import { customDays, type Habit } from './schema';
-import { weekdayKey } from './dates';
+import { weekdayKey, localDateStr } from './dates';
 
 /**
  * Is this habit due today?
@@ -26,6 +26,28 @@ export function isDueToday(
     case 'custom':
       return customDays(habit).includes(weekdayKey(today));
   }
+}
+
+/** Consecutive due days completed, walking back from today. Today being
+ *  due-but-unlogged doesn't break the streak (the day isn't over yet).
+ *  Weekly cadence has no daily streak — returns null. */
+export function currentStreak(
+  habit: Habit,
+  doneDates: Set<string>,
+  today: Date = new Date()
+): number | null {
+  if (habit.cadence === 'weekly') return null;
+  let streak = 0;
+  const d = new Date(today);
+  if (isDueOnDate(habit, d) && !doneDates.has(localDateStr(d))) d.setDate(d.getDate() - 1);
+  for (let i = 0; i < 366; i++) {
+    if (isDueOnDate(habit, d)) {
+      if (doneDates.has(localDateStr(d))) streak++;
+      else break;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
 }
 
 /** Was the habit due on a given (past) date? Weekly is approximated as
