@@ -3,6 +3,7 @@
   import DataTable, { type Column } from '../../../ui/components/data-table.svelte';
   import StatusBadge from '../../../ui/components/status-badge.svelte';
   import Select from '../../../ui/components/select.svelte';
+  import ConfirmButton from '../../../ui/components/confirm-button.svelte';
   import Panel from '../../../ui/layout/panel.svelte';
   import ImportDialog from '../components/import-dialog.svelte';
   import { events } from '../../../core/events';
@@ -16,7 +17,6 @@
   let selected = $state<(string | number)[]>([]);
   let bulkStatus = $state<ApplicationStatus>('interview');
   const statusOptions = STATUSES.map((s) => ({ value: s, label: s }));
-  let deleteArmed = $state(false);
   let working = $state(false);
 
   async function refresh() {
@@ -75,7 +75,6 @@
 
   function onSelectedChange(ids: (string | number)[]) {
     selected = ids;
-    deleteArmed = false;
   }
 
   async function applyBulkStatus() {
@@ -89,15 +88,10 @@
 
   async function bulkDelete() {
     if (!selected.length || working) return;
-    if (!deleteArmed) {
-      deleteArmed = true;
-      return;
-    }
     working = true;
     await deleteApplications(selected.map(Number));
     working = false;
     selected = [];
-    deleteArmed = false;
     events.emit('pipeline:changed');
   }
 </script>
@@ -143,9 +137,14 @@
     <span class="count">{selected.length} selected</span>
     <Select options={statusOptions} bind:value={bulkStatus} direction="up" />
     <button onclick={applyBulkStatus} disabled={working}>Set stage</button>
-    <button class="danger" onclick={bulkDelete} disabled={working}>
-      {deleteArmed ? 'Confirm delete' : 'Delete'}
-    </button>
+    <ConfirmButton
+      label="Delete"
+      confirmLabel="Confirm delete"
+      danger
+      pill
+      disabled={working}
+      onConfirm={bulkDelete}
+    />
     <button class="dismiss" onclick={() => onSelectedChange([])}>✕</button>
   </div>
 {/if}
@@ -220,16 +219,6 @@
 
   .island button {
     border-radius: 999px;
-  }
-
-  .danger {
-    border-color: var(--color-danger);
-    color: var(--color-danger);
-  }
-
-  .danger:hover {
-    border-color: var(--color-danger);
-    background: var(--color-danger-muted);
   }
 
   .dismiss {

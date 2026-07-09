@@ -179,7 +179,7 @@
     list-style: none;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--shadow-menu);
     padding: var(--space-1) 0;
     z-index: 90;
   }

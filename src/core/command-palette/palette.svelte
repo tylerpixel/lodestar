@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
+  import Overlay from '../../ui/components/overlay.svelte';
   import { palette, type Command } from './registry.svelte';
 
   let query = $state('');
@@ -73,15 +74,10 @@
       if (cmd) void runCommand(cmd);
     }
   }
-
-  function onOverlayMouseDown(e: MouseEvent) {
-    if (e.target === e.currentTarget) palette.open = false;
-  }
 </script>
 
 {#if palette.open}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="overlay" onmousedown={onOverlayMouseDown}>
+  <Overlay top="12vh" onDismiss={() => (palette.open = false)}>
     <div class="palette">
       <input
         bind:this={inputEl}
@@ -114,27 +110,16 @@
         </ul>
       {/if}
     </div>
-  </div>
+  </Overlay>
 {/if}
 
 <style>
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 12vh;
-    z-index: 100;
-  }
-
   .palette {
     width: 520px;
     max-width: calc(100vw - 48px);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-pop);
   }
 
   input {

@@ -26,12 +26,11 @@ npm run tauri dev
 
 ## Releasing
 
-1. Bump `version` in `src-tauri/tauri.conf.json` and `package.json`.
-2. Commit, then tag and push:
-
 ```sh
-git tag vX.Y.Z && git push origin main --tags
+scripts/release.sh X.Y.Z "commit message"
 ```
+
+Bumps both version fields, runs check + build, commits, tags `vX.Y.Z`, and pushes.
 
 CI builds the .dmg and updater artifacts, signs the update with the Tauri updater
 key (`TAURI_SIGNING_PRIVATE_KEY` repo secret; keypair lives in `~/.tauri/lodestar.key`),

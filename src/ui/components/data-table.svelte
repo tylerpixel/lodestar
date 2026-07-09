@@ -54,22 +54,25 @@
     return Number.isFinite(n) ? n : DEFAULT_WIDTH;
   }
 
-  let widths = $state<Record<string, number>>(
-    Object.fromEntries(columns.map((c) => [c.key, parseWidth(c.width)]))
-  );
+  // Only user-resized columns live here; everything else falls back to the
+  // column's declared width, so dynamic column sets stay correct.
+  let widths = $state<Record<string, number>>({});
+
+  function colWidth(col: Column<Row>): number {
+    return widths[col.key] ?? parseWidth(col.width);
+  }
 
   const totalWidth = $derived(
-    columns.reduce((sum, c) => sum + (widths[c.key] ?? DEFAULT_WIDTH), 0) +
-      (selectable ? SELECT_WIDTH : 0)
+    columns.reduce((sum, c) => sum + colWidth(c), 0) + (selectable ? SELECT_WIDTH : 0)
   );
 
-  function startResize(e: MouseEvent, key: string) {
+  function startResize(e: MouseEvent, col: Column<Row>) {
     e.preventDefault();
     e.stopPropagation();
     const startX = e.clientX;
-    const startWidth = widths[key] ?? DEFAULT_WIDTH;
+    const startWidth = colWidth(col);
     const move = (ev: MouseEvent) => {
-      widths[key] = Math.max(MIN_WIDTH, startWidth + ev.clientX - startX);
+      widths[col.key] = Math.max(MIN_WIDTH, startWidth + ev.clientX - startX);
     };
     const up = () => {
       window.removeEventListener('mousemove', move);
@@ -146,12 +149,12 @@
           </th>
         {/if}
         {#each columns as col (col.key)}
-          <th style:width="{widths[col.key]}px" class:right={col.align === 'right'}>
+          <th style:width="{colWidth(col)}px" class:right={col.align === 'right'}>
             <button onclick={() => sortBy(col)} disabled={col.sortable === false}>
               {col.label}{sortKey === col.key ? (sortDir === 1 ? ' ↑' : ' ↓') : ''}
             </button>
             <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <span class="resizer" onmousedown={(e) => startResize(e, col.key)}></span>
+            <span class="resizer" onmousedown={(e) => startResize(e, col)}></span>
           </th>
         {/each}
       </tr>
@@ -263,11 +266,6 @@
   .right button {
     text-align: right;
     width: 100%;
-  }
-
-  .mono {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
   }
 
   tr.clickable:hover td {

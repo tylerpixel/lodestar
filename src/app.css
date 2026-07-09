@@ -67,6 +67,12 @@ input:focus {
 
 /* Native checkboxes/selects are replaced by ui/components/{checkbox,radio,select}.svelte */
 
+/* Figures, timestamps, money: monospace with lining numerals (PRD §9) */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 .boot-error {
   padding: var(--space-6);
   font-family: var(--font-mono);

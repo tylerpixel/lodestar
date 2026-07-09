@@ -1,5 +1,6 @@
 <script lang="ts">
   import Panel from '../../../ui/layout/panel.svelte';
+  import ConfirmButton from '../../../ui/components/confirm-button.svelte';
   import { events } from '../../../core/events';
   import { cadenceLabel, type Habit } from '../data/schema';
   import { localDateStr, addDays } from '../data/dates';
@@ -15,7 +16,6 @@
   };
 
   let rows = $state<HistoryRow[]>([]);
-  let archiveArmedId = $state<number | null>(null);
 
   async function load() {
     const habits = await listActiveHabits();
@@ -55,11 +55,6 @@
   });
 
   async function archive(id: number) {
-    if (archiveArmedId !== id) {
-      archiveArmedId = id;
-      return;
-    }
-    archiveArmedId = null;
     await archiveHabit(id);
     events.emit('habits:changed');
   }
@@ -90,9 +85,7 @@
             <span class="rate mono">
               {row.rate == null ? '—' : `${Math.round(row.rate * 100)}%`}
             </span>
-            <button class="archive" onclick={() => archive(row.habit.id)}>
-              {archiveArmedId === row.habit.id ? 'Confirm' : 'Archive'}
-            </button>
+            <ConfirmButton label="Archive" subtle onConfirm={() => archive(row.habit.id)} />
           </div>
         {/each}
       </div>
@@ -160,16 +153,6 @@
   .rate {
     width: 44px;
     text-align: right;
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-  }
-
-  .mono {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .archive {
     font-size: var(--text-xs);
     color: var(--color-text-muted);
   }

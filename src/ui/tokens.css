@@ -42,6 +42,11 @@
 
   --motion-fast: 120ms;
 
+  /* Elevation + scrim (the only sanctioned shadows) */
+  --color-scrim: rgba(0, 0, 0, 0.45);
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --shadow-menu: 0 8px 28px rgba(0, 0, 0, 0.45);
+
   /* Frameless window: clearance for the macOS traffic lights overlay */
   --titlebar-inset: 84px;
 }

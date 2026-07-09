@@ -69,11 +69,6 @@
 <CommandPalette />
 
 <style>
-  .mono {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-  }
-
   .status {
     color: var(--color-text-muted);
     flex: 1;
