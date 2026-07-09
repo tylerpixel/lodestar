@@ -2,12 +2,25 @@
   import { getVersion } from '@tauri-apps/api/app';
   import Panel from '../ui/layout/panel.svelte';
   import { updater } from '../core/updater.svelte';
+  import { events } from '../core/events';
+  import { getSetting, setSetting } from '../core/settings';
 
   let version = $state('—');
+  let atRiskHour = $state('18');
 
   $effect(() => {
     getVersion().then((v) => (version = v));
+    getSetting('habits.at_risk_hour').then((v) => {
+      if (v != null && v !== '') atRiskHour = v;
+    });
   });
+
+  async function saveAtRiskHour() {
+    const hour = Math.min(23, Math.max(0, Number(atRiskHour) || 18));
+    atRiskHour = String(hour);
+    await setSetting('habits.at_risk_hour', atRiskHour);
+    events.emit('settings:changed');
+  }
 </script>
 
 <div class="system">
@@ -32,6 +45,20 @@
           {:else}
             <button onclick={() => updater.check()}>Check now</button>
           {/if}
+        </dd>
+      </div>
+      <div>
+        <dt>Habits at-risk hour</dt>
+        <dd>
+          <input
+            class="hour"
+            type="number"
+            min="0"
+            max="23"
+            bind:value={atRiskHour}
+            onchange={saveAtRiskHour}
+          />
+          <span class="status">due habits unlogged by this hour flag as at-risk</span>
         </dd>
       </div>
     </dl>
@@ -77,5 +104,10 @@
 
   .status {
     color: var(--color-text-muted);
+  }
+
+  .hour {
+    width: 64px;
+    font-family: var(--font-mono);
   }
 </style>

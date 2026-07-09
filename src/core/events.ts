@@ -3,6 +3,8 @@
 export interface AppEvents {
   'notes:changed': undefined;
   'pipeline:changed': undefined;
+  'habits:changed': undefined;
+  'settings:changed': undefined;
 }
 
 type EventKey = keyof AppEvents;

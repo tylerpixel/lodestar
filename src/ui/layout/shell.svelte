@@ -7,31 +7,17 @@
     items,
     activeId,
     onNavigate,
-    captures = [],
-    onCapture,
-    settings,
     onHeaderMouseDown,
+    footer,
     children,
   }: {
     items: NavItem[];
     activeId: string;
     onNavigate: (id: string) => void;
-    captures?: NavItem[];
-    onCapture?: (id: string) => void;
-    settings?: NavItem;
     onHeaderMouseDown?: (e: MouseEvent) => void;
+    footer?: Snippet;
     children: Snippet;
   } = $props();
-
-  let addOpen = $state(false);
-
-  $effect(() => {
-    if (!addOpen) return;
-    const close = () => (addOpen = false);
-    // Deferred so the opening click doesn't immediately close it
-    queueMicrotask(() => window.addEventListener('click', close, { once: true }));
-    return () => window.removeEventListener('click', close);
-  });
 </script>
 
 <div class="shell">
@@ -48,44 +34,19 @@
       <path d="M41.2956 31.36C31.7056 31.36 25.1606 24.92 25.1606 15.68C25.1606 6.44 31.7056 0 41.2956 0C50.9206 0 57.4656 6.44 57.4656 15.68C57.4656 24.92 50.9206 31.36 41.2956 31.36ZM41.2956 25.305C46.5456 25.305 50.5356 21.455 50.5356 15.68C50.5356 9.905 46.5456 6.055 41.2956 6.055C36.0806 6.055 32.0556 9.905 32.0556 15.68C32.0556 21.455 36.0806 25.305 41.2956 25.305Z" fill="currentColor"/>
       <path d="M0 30.38V0.980011H6.965V24.535H23.905V30.38H0Z" fill="currentColor"/>
     </svg>
+  </header>
+  <div class="body">
     <nav>
       {#each items as item (item.id)}
         <button class:active={item.id === activeId} onclick={() => onNavigate(item.id)}>
           {item.label}
         </button>
       {/each}
-      {#if captures.length && onCapture}
-        <div class="add">
-          <button class="primary" onclick={() => (addOpen = !addOpen)}>+ Add</button>
-          {#if addOpen}
-            <ul class="add-menu">
-              {#each captures as capture (capture.id)}
-                <li>
-                  <button
-                    onclick={() => {
-                      addOpen = false;
-                      onCapture(capture.id);
-                    }}
-                  >
-                    {capture.label}
-                  </button>
-                </li>
-              {/each}
-            </ul>
-          {/if}
-        </div>
-      {/if}
     </nav>
-  </header>
-  <main>{@render children()}</main>
-  {#if settings}
-    <button
-      class="settings-corner"
-      class:active={settings.id === activeId}
-      onclick={() => onNavigate(settings.id)}
-    >
-      {settings.label}
-    </button>
+    <main>{@render children()}</main>
+  </div>
+  {#if footer}
+    <footer>{@render footer()}</footer>
   {/if}
 </div>
 
@@ -93,17 +54,16 @@
   .shell {
     height: 100%;
     display: grid;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto 1fr auto;
   }
 
   header {
     display: flex;
     align-items: center;
-    gap: var(--space-4);
-    /* 28px matches the macOS title-bar region, so content centres on the
-       traffic-light axis (~14px). No divider below — must not read as a title bar. */
+    /* aligned to the traffic-light axis; left inset clears the lights */
     height: 28px;
-    padding: 0 var(--space-3) 0 var(--titlebar-inset);
+    padding: 0 var(--space-4) 0 var(--titlebar-inset);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .logotype {
@@ -114,19 +74,27 @@
     user-select: none;
   }
 
+  .body {
+    display: grid;
+    grid-template-columns: 168px 1fr;
+    overflow: hidden;
+  }
+
   nav {
-    margin-left: auto;
     display: flex;
-    align-items: center;
-    gap: var(--space-1);
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-3) var(--space-2);
+    border-right: 1px solid var(--color-border);
   }
 
   nav button {
     background: none;
     border: none;
+    text-align: left;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
-    padding: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-3);
     transition: color var(--motion-fast);
   }
 
@@ -136,77 +104,21 @@
 
   nav button.active {
     color: var(--color-text);
-    box-shadow: inset 0 -2px 0 var(--color-accent);
-  }
-
-  nav button.primary {
-    background: var(--color-accent);
-    color: var(--color-on-accent);
-    font-weight: 600;
-  }
-
-  nav button.primary:hover {
-    background: var(--color-accent-hover);
-  }
-
-  .add {
-    position: relative;
-    margin-left: var(--space-2);
-  }
-
-  .add-menu {
-    position: absolute;
-    top: calc(100% + var(--space-1));
-    right: 0;
-    min-width: 180px;
-    list-style: none;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-    padding: var(--space-1) 0;
-    z-index: 50;
-  }
-
-  .add-menu button {
-    display: block;
-    width: 100%;
-    text-align: left;
-    background: none;
-    border: none;
-    color: var(--color-text);
-    font-size: var(--text-sm);
-    padding: var(--space-2) var(--space-3);
-  }
-
-  .add-menu button:hover {
     background: var(--color-accent-muted);
     box-shadow: inset 2px 0 0 var(--color-accent);
   }
 
   main {
     overflow-y: auto;
-    padding: var(--space-6) var(--space-6) 56px;
+    padding: var(--space-6);
   }
 
-  .settings-corner {
-    position: fixed;
-    bottom: var(--space-3);
-    left: var(--space-3);
-    background: none;
-    border: none;
-    color: var(--color-text-muted);
+  footer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border-top: 1px solid var(--color-border);
     font-size: var(--text-xs);
-    padding: var(--space-1) var(--space-2);
-    transition: color var(--motion-fast);
-    z-index: 40;
-  }
-
-  .settings-corner:hover {
-    color: var(--color-text);
-  }
-
-  .settings-corner.active {
-    color: var(--color-text);
-    box-shadow: inset 0 -2px 0 var(--color-accent);
   }
 </style>
