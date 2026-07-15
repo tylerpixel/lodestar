@@ -8,12 +8,15 @@ import { palette, type Command } from './command-palette/registry.svelte';
 export interface ModuleManifest {
   id: string;
   migrations?: Migration[];
+  /** Boot-time module work (schedulers, data upkeep). Runs after migrations. */
+  init?: () => void | Promise<void>;
   routes?: Route[];
   commands?: Command[];
 }
 
 export async function registerModule(manifest: ModuleManifest): Promise<void> {
   if (manifest.migrations?.length) await runMigrations(manifest.id, manifest.migrations);
+  if (manifest.init) await manifest.init();
   if (manifest.routes?.length) router.register(...manifest.routes);
   if (manifest.commands?.length) palette.register(...manifest.commands);
 }
