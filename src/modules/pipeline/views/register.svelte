@@ -7,7 +7,6 @@
   import Overlay from '../../../ui/components/overlay.svelte';
   import Panel from '../../../ui/layout/panel.svelte';
   import { events } from '../../../core/events';
-  import { parseUtc } from '../../../ui/time';
   import {
     listApplications,
     setStage,
@@ -44,11 +43,15 @@
 
   // ---- display helpers ------------------------------------------------
 
-  /** `dd mmm`. Bare dates are local; datetimes are stored UTC (see ui/time). */
+  const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+  /** `dd mmm` from the stored date part, no zone conversion — the staleness
+   *  clock (§4) counts from date(stage_changed_at) as stored, and displayed
+   *  dates must match what the days column counts from. */
   function ddmmm(value: string | null): string {
     if (!value) return '';
-    const d = value.includes(':') ? parseUtc(value) : new Date(value + 'T00:00:00');
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toLowerCase();
+    const [, m, d] = value.slice(0, 10).split('-').map(Number);
+    return `${String(d).padStart(2, '0')} ${MONTHS[m - 1]}`;
   }
 
   /** Interview / outcome column (spec §7): interview date while in play,
