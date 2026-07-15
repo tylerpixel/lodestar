@@ -26,3 +26,7 @@ dist-ssr
 # Tauri
 src-tauri/target
 src-tauri/gen/schemas
+
+# Local planning docs — read by Claude Code each session, not tracked
+docs/
+lodestar-docs.zip
