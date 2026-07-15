@@ -1,32 +1,30 @@
 import type { Tone } from '../../../ui/components/status-badge.svelte';
 
-export const STATUSES = [
+// Five-stage model (pipeline register spec §2). "Stale" is a computed
+// display state, never a stored stage.
+export const STAGES = [
   'applied',
-  'screening',
-  'interview',
-  'offer',
+  'interviewing',
+  'interviewed',
   'rejected',
-  'withdrawn',
-  'ghosted',
+  'hired',
 ] as const;
 
-export type ApplicationStatus = (typeof STATUSES)[number];
+export type Stage = (typeof STAGES)[number];
 
-/** Statuses excluded from staleness — the pipeline has concluded. */
-export const TERMINAL_STATUSES: readonly ApplicationStatus[] = [
-  'rejected',
-  'withdrawn',
-  'ghosted',
-];
+/** Terminal stages: never stale, never a current objective, grouped last. */
+export const TERMINAL_STAGES: readonly Stage[] = ['rejected', 'hired'];
 
-export const STATUS_TONE: Record<ApplicationStatus, Tone> = {
+export function isTerminal(stage: Stage): boolean {
+  return TERMINAL_STAGES.includes(stage);
+}
+
+export const STAGE_TONE: Record<Stage, Tone> = {
   applied: 'neutral',
-  screening: 'accent',
-  interview: 'accent',
-  offer: 'accent',
+  interviewing: 'accent',
+  interviewed: 'accent',
   rejected: 'danger',
-  withdrawn: 'neutral',
-  ghosted: 'warn',
+  hired: 'accent',
 };
 
 export type Application = {
@@ -35,12 +33,15 @@ export type Application = {
   role: string;
   source: string | null;
   url: string | null;
-  status: ApplicationStatus;
+  status: Stage;
   salary_min: number | null;
   salary_max: number | null;
   applied_at: string;
   last_activity_at: string;
-  /** Interview or rejection date — drives "days between" tracking. */
+  /** When the row entered its current stage — drives the staleness clock. */
+  stage_changed_at: string;
+  /** Interview date; required while `interviewing` (spec §2). */
+  interview_at: string | null;
   outcome_at: string | null;
   next_action: string | null;
   next_action_due: string | null;
@@ -49,21 +50,9 @@ export type Application = {
   updated_at: string;
 };
 
-/** Application with SQL-computed flags: staleness (0/1) and days from
- *  applied to interview/rejection (null until an outcome date exists). */
+/** Application with SQL-computed staleness: calendar days in the current
+ *  stage and the 7-day stale flag (0/1; only `applied`/`interviewed`). */
 export type ApplicationRow = Application & {
+  days_in_stage: number;
   is_stale: number;
-  days_to_outcome: number | null;
-};
-
-export type EventKind = 'status_change' | 'note' | 'contact' | 'interview';
-
-export const EVENT_KINDS: readonly EventKind[] = ['note', 'contact', 'interview'];
-
-export type ApplicationEvent = {
-  id: number;
-  application_id: number;
-  kind: EventKind;
-  detail: string | null;
-  occurred_at: string;
 };
